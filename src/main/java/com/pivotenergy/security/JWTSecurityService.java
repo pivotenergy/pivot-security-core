@@ -41,6 +41,10 @@ public class JWTSecurityService {
         tokenLifeSeconds = expiration;
     }
 
+    public long getTokenLifeSeconds() {
+        return tokenLifeSeconds;
+    }
+
     /**
      * We have made this filter responsible for creating access tokens too.
      * This way, we keep all functionality regarding JWTs in a single place.
