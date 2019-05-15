@@ -64,7 +64,7 @@ class JWTAuthorizationFilterSpec extends Specification {
     def initUserInfo() {
         UserSession userInfo = new UserSession()
         userInfo.id = "user_id"
-        userInfo.accountId = "account_id"
+        userInfo.groupId = "group_id"
         userInfo.firstName = "first"
         userInfo.lastName = "last"
         userInfo.userEmail = "usaer@email.com"

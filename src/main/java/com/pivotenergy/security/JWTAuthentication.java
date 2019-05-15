@@ -2,11 +2,11 @@ package com.pivotenergy.security;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.pivotenergy.security.model.UserSession;
-import com.pivotenergy.security.model.response.TokenPair;
+import lombok.Getter;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import java.util.Collection;
+import java.util.Set;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
@@ -15,24 +15,30 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
  */
 @SuppressWarnings("WeakerAccess")
 @JsonInclude(value = NON_NULL)
+@Getter
 public class JWTAuthentication extends UsernamePasswordAuthenticationToken {
+    private String userId;
+    private String groupId;
+    private String tenantId;
 
-    public JWTAuthentication(Object principal, Object credentials, Collection<? extends GrantedAuthority> authorities) {
+    public JWTAuthentication(String principal, String credentials, Set<SimpleGrantedAuthority> authorities) {
         super(principal, credentials, authorities);
     }
 
-    public TokenPair getTokenPair() {
-        return (TokenPair) super.getDetails();
+    public JWTAuthentication(UserSession session) {
+        super(session.getId(), session.getTenantId(), session.getAuthorities());
+        super.setDetails(session);
+        this.userId = session.getId();
+        this.groupId = session.getGroupId();
+        this.tenantId = session.getTenantId();
+    }
+
+    public UserSession getDetails() {
+        return (UserSession) super.getDetails();
     }
 
     @Override
-    public UserSession getPrincipal() {
-        return (UserSession) super.getPrincipal();
-    }
-
-
-    public JWTAuthentication setTokenPair(TokenPair tokenPair) {
-        super.setDetails(tokenPair);
-        return this;
+    public String getPrincipal() {
+        return (String) super.getPrincipal();
     }
 }

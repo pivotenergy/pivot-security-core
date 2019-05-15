@@ -9,6 +9,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -19,18 +20,14 @@ import java.util.stream.Collectors;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class UserSession implements UserDetails {
     private String id;
-    private String accountId;
+    private String groupId;
     private String locale;
     private String userEmail;
     private String firstName;
     private String lastName;
-    private Type accountType;
-    private Boolean enabled;
-    private Boolean locked;
-    private Boolean expired;
-    private Integer failedLoginAttempts;
-    private String oboAccountId;
-    private Set<Role> roles;
+    private Type type;
+    private String tenantId;
+    private Set<Role> roles = new HashSet<>();
 
     @Override
     @JsonIgnore
@@ -55,30 +52,30 @@ public class UserSession implements UserDetails {
     @Override
     @JsonIgnore
     public boolean isAccountNonExpired() {
-        return expired;
+        return true;
     }
 
     @Override
     @JsonIgnore
     public boolean isAccountNonLocked() {
-        return locked;
+        return true;
     }
 
     @Override
     @JsonIgnore
     public boolean isCredentialsNonExpired() {
-        return expired;
+        return true;
     }
 
     @Override
     @JsonIgnore
     public boolean isEnabled() {
-        return enabled;
+        return true;
     }
 
     @JsonIgnore
     public String getTenantId() {
-        return Optional.ofNullable(oboAccountId).orElse(accountId);
+        return Optional.ofNullable(tenantId).orElse(groupId);
     }
 
     @SuppressWarnings("unused")

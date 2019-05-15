@@ -44,9 +44,9 @@ public class JWTAuthorizationFilter extends GenericFilterBean {
                             LOG.debug("JWT verified");
                             LOG.debug("Attempting to populate SecurityContextHolder from JWT");
                             JWTAuthentication authentication = jwtSecurityService.authenticationFromToken(token);
-                            if (null != authentication && canActOnBehalfOf(authentication.getPrincipal())) {
+                            if (null != authentication && canActOnBehalfOf(authentication.getDetails())) {
                                 LOG.debug("User can act an behalf of account {}", obo);
-                                authentication.getPrincipal().setOboAccountId(obo);
+                                authentication.getDetails().setTenantId(obo);
                             }
                             getContext().setAuthentication(authentication);
                             LOG.debug("SecurityContextHolder populated from JWT {}", authentication);
@@ -66,7 +66,7 @@ public class JWTAuthorizationFilter extends GenericFilterBean {
     }
 
     private boolean canActOnBehalfOf(UserSession user) {
-        return null != user && hasPrivilegedType(user.getAccountType()) &&
+        return null != user && hasPrivilegedType(user.getType()) &&
                 user.getRoles().stream().anyMatch(role -> hasPrivilegedRole(role.getScope()));
 
     }
