@@ -9,8 +9,10 @@ import com.pivotenergy.security.util.JSON;
 import com.pivotenergy.security.util.JWTUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +21,8 @@ import java.util.Date;
 
 @SuppressWarnings("WeakerAccess")
 @Service
-@Configuration
+@EnableConfigurationProperties
+@ConfigurationProperties(prefix="token.config")
 public class JWTSecurityService {
     private static final Logger LOG = LoggerFactory.getLogger(JWTSecurityService.class);
     public static final String USER_PROFILE_CLAIM = "profile";
@@ -28,21 +31,18 @@ public class JWTSecurityService {
     public static final String AUTHORIZATION_OBO = "X-AUTH-OBO";
     public static final String AUTHORIZATION_PREFIX_BEARER = "Bearer ";
 
-    @Value("${token.config.expirationTime:600}")
-    private long tokenLifeSeconds;
-
-    @Value("${token.config.secret:secret}")
-    private String secret;
+    private long expirationTime = 3600 * 24;
+    private String secret = "secret";
 
     public JWTSecurityService(){}
 
     public JWTSecurityService(String secret, long expiration) {
         this.secret = secret;
-        tokenLifeSeconds = expiration;
+        this.expirationTime = expiration;
     }
 
     public long getTokenLifeSeconds() {
-        return tokenLifeSeconds;
+        return expirationTime;
     }
 
     /**
@@ -54,7 +54,7 @@ public class JWTSecurityService {
                 .withSubject(user.getUsername())
                 .withClaim(USER_PROFILE_CLAIM, JSON.toJsonSafe(user))
                 .withIssuedAt(new Date())
-                .withExpiresAt(new Date(System.currentTimeMillis() + tokenLifeSeconds * 1000))
+                .withExpiresAt(new Date(System.currentTimeMillis() + expirationTime * 1000))
                 .sign(Algorithm.HMAC256(secret.getBytes()));
     }
 
@@ -64,7 +64,7 @@ public class JWTSecurityService {
                 .withSubject(user.getUsername())
                 .withClaim(USER_PROFILE_CLAIM, JSON.toJsonSafe(user))
                 .withIssuedAt(new Date())
-                .withExpiresAt(new Date(System.currentTimeMillis() + tokenLifeSeconds * 1000));
+                .withExpiresAt(new Date(System.currentTimeMillis() + expirationTime * 1000));
     }
 
     @SuppressWarnings("unused")
@@ -103,5 +103,10 @@ public class JWTSecurityService {
         UserSession user = JSON.fromJson(jwt.getClaim(USER_PROFILE_CLAIM).asString(), UserSession.class);
         LOG.debug("JWTAuthentication Created, returning");
         return new JWTAuthentication(user);
+    }
+
+    @Bean
+    public static PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
+        return new PropertySourcesPlaceholderConfigurer();
     }
 }

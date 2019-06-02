@@ -20,17 +20,14 @@
 
 package com.pivotenergy.security.spel;
 
-import com.pivotenergy.security.model.UserSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.access.PermissionEvaluator;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
-
-import static com.pivotenergy.security.model.UserSession.Role.Action.ADMIN;
-import static com.pivotenergy.security.model.UserSession.Role.Target.GLOBAL;
 
 @SuppressWarnings("WeakerAccess")
 @Component
@@ -38,55 +35,34 @@ public class PivotPermissionEvaluator implements PermissionEvaluator {
     private Logger LOG = LoggerFactory.getLogger(PivotPermissionEvaluator.class);
 
     @Override
-    public boolean hasPermission(Authentication auth, Object domainObject, Object permission) {
-        if (isNull(auth, domainObject) || !isPermissionInValid(permission)) {
+    public boolean hasPermission(
+            Authentication auth, Object targetDomainObject, Object permission) {
+        if ((auth == null) || (targetDomainObject == null) || !(permission instanceof String)){
             return false;
         }
+        String targetType = targetDomainObject.getClass().getSimpleName().toUpperCase();
 
-        String target, action = String.valueOf(permission);
-        if (domainObject instanceof String) {
-            target = String.valueOf(domainObject);
-        }
-        else {
-            target = domainObject.getClass().getSimpleName();
-        }
-
-        return hasPrivilege(auth, UserSession.Role.Target.valueOf(target), UserSession.Role.Action.valueOf(action));
+        return hasPrivilege(auth, targetType, permission.toString().toUpperCase());
     }
 
     @Override
-    public boolean hasPermission(Authentication auth, Serializable targetId, String target, Object action) {
-        if (isNull(auth, target) || isPermissionInValid(action) || target.isEmpty()) {
+    public boolean hasPermission(
+            Authentication auth, Serializable targetId, String targetType, Object permission) {
+        if ((auth == null) || (targetType == null) || !(permission instanceof String)) {
             return false;
         }
-        String _action = String.valueOf(action);
-        return hasPrivilege(auth, UserSession.Role.Target.valueOf(target), UserSession.Role.Action.valueOf(_action));
+        return hasPrivilege(auth, targetType.toUpperCase(),
+                permission.toString().toUpperCase());
     }
 
-    public boolean hasPrivilege(Authentication auth, UserSession.Role.Target _target, UserSession.Role.Action _action) {
-        UserSession user = (UserSession) auth.getDetails();
-
-        for (UserSession.Role role : user.getRoles()) {
-            UserSession.Role.Scope scope = role.getScope();
-            UserSession.Role.Action action = role.getAction();
-            UserSession.Role.Target target = role.getTarget();
-            if ((action.equals(ADMIN) || action.equals(_action)) && (target.equals(GLOBAL) || target.equals(_target)))
-            {
-                LOG.debug("user {} has {} privilege on {} with {} permission",
-                        user.getId(), scope, _target, _action);
-                return true;
+    private boolean hasPrivilege(Authentication auth, String targetType, String permission) {
+        for (GrantedAuthority grantedAuth : auth.getAuthorities()) {
+            if (grantedAuth.getAuthority().startsWith(targetType)) {
+                if (grantedAuth.getAuthority().contains(permission)) {
+                    return true;
+                }
             }
         }
-
-        LOG.debug("{} privilege not found for: {}", _action, _target);
         return false;
-    }
-
-    private boolean isPermissionInValid(Object permission) {
-        return !(permission instanceof String) || ((String) permission).isEmpty();
-    }
-
-    private boolean isNull(Authentication auth, Object target) {
-        return auth == null || target == null;
     }
 }
