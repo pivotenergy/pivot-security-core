@@ -23,7 +23,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     public void configure(WebSecurity web) {
-        web.debug(true)
+        web.debug(false)
                 .ignoring()
                 .antMatchers(HttpMethod.HEAD)
                 .antMatchers(HttpMethod.OPTIONS)
